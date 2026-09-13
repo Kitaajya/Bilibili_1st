@@ -3,10 +3,7 @@ package org.designer.bilibili_1st.controller;
 import lombok.RequiredArgsConstructor;
 import org.designer.bilibili_1st.entity.LogInRequest;
 import org.designer.bilibili_1st.service.LogInService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 

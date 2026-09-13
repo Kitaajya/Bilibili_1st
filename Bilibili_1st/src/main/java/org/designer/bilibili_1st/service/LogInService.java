@@ -20,9 +20,11 @@ public class LogInService {
 
     public Map<String, Object> register(LogInRequest request) {
         if (request.getQqEmail() == null || request.getQqEmail().isBlank()
-                || request.getQqEmail().isEmpty() && request.getPhoneNumber() == null
-                || request.getVirtualName() == null || request.getVirtualName().isBlank()) {
-            return Map.of("success", false, "message", "账号、昵称、密码不能为空");
+                || request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+            return Map.of("success", false, "message", "账号（邮箱或手机号）、昵称、密码不能为空");
+        }
+        if (request.getVirtualName() == null || request.getVirtualName().isBlank()) {
+            return Map.of("success", false, "message", "昵称不能为空");
         }
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             return Map.of("success", false, "message", "密码不能为空");
@@ -41,10 +43,13 @@ public class LogInService {
         entity.setRealName(request.getRealName());
         entity.setVirtualName(request.getVirtualName());
         entity.setPassword(passwordEncoder.encode(request.getPassword()));
+        entity.setRole("USER");
 
         logInMapper.save(entity);
         log.info("新用户注册: {}", entity.getQqEmail());
-        return Map.of("success", true, "message", "注册成功");
+        return Map.of("success", true, "message", "注册成功",
+                "userId", entity.getId(), "virtualName", entity.getVirtualName(),
+                "role", entity.getRole());
     }
 
     public Map<String, Object> login(LogInRequest request) {
@@ -61,6 +66,8 @@ public class LogInService {
             return Map.of("success", false, "message", "密码错误");
         }
         log.info("用户登录: {}", request.getQqEmail());
-        return Map.of("success", true, "message", "登录成功");
+        return Map.of("success", true, "message", "登录成功",
+                "userId", user.getId(), "virtualName", user.getVirtualName(),
+                "role", user.getRole());
     }
 }

@@ -68,7 +68,6 @@ public class PurchaseMapper {
                 "UPDATE bilibili_purchase SET contents= ? WHERE user_id= ? AND id = ?",
                 contents, userId, id);
     }
-    //改评论
     public int editEvaluation(String contents, int userId, int id){
         return jdbcTemplate.update("UPDATE bilibili_purchase SET contents=? WHERE user_id=? AND id=?",
                 contents,userId,id);
@@ -85,6 +84,6 @@ public class PurchaseMapper {
     }
     //查看商品id为id的所有评论
     public List<Map<String,Object>> selectAllEvaluations(int id){
-        return jdbcTemplate.queryForList("SELECT contents FROM bilibili_purchase");
+        return jdbcTemplate.queryForList("SELECT contents FROM bilibili_purchase WHERE id=?", id);
     }
 }

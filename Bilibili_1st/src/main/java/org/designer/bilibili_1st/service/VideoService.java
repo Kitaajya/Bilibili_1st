@@ -1,0 +1,145 @@
+package org.designer.bilibili_1st.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.designer.bilibili_1st.mapper.VideoMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class VideoService {
+    private final VideoMapper videoMapper;
+
+    @Value("${file.upload.path}")
+    private String uploadPath;
+
+    //上传视频：文件保存到磁盘，视频信息写入数据库
+    public Map<String, Object> uploadVideo(long userId, String title, MultipartFile file) {
+        if (file == null || file.isEmpty())
+            return Map.of("success", false, "message", "请选择要上传的视频文件");
+        if (title == null || title.isBlank())
+            return Map.of("success", false, "message", "视频标题不能为空");
+
+        try {
+            File dir = new File(uploadPath);
+            if (!dir.exists() && !dir.mkdirs())
+                return Map.of("success", false, "message", "上传目录创建失败");
+            if (!dir.isDirectory())
+                return Map.of("success", false, "message", "上传路径不是目录：" + uploadPath);
+
+            String originalName = file.getOriginalFilename() == null ? "video.mp4" : file.getOriginalFilename();
+            String ext = originalName.contains(".")
+                    ? originalName.substring(originalName.lastIndexOf('.')) : ".mp4";
+            String savedName = UUID.randomUUID() + ext;
+            File dest = new File(dir, savedName);
+            file.transferTo(dest);
+
+            long id = videoMapper.uploadVideo(userId, title, dest.getAbsolutePath());
+            if (id <= 0) return Map.of("success", false, "message", "上传失败");
+            log.info("用户{}上传了视频：{}", userId, title);
+            return Map.of("success", true, "message", "上传成功", "videoId", id);
+        } catch (IOException e) {
+            log.error("视频上传失败", e);
+            return Map.of("success", false, "message", "上传失败：" + e.getMessage());
+        }
+    }
+
+    //显示全部视频
+    public List<Map<String, Object>> selectAllVideo() {
+        return videoMapper.selectAllVideo();
+    }
+
+    //查看某个人的视频
+    public List<Map<String, Object>> selectVideoByUserId(long userId) {
+        return videoMapper.selectVideoByUserId(userId);
+    }
+
+    //按id查询视频
+    public List<Map<String, Object>> selectVideoById(long id) {
+        return videoMapper.selectVideoById(id);
+    }
+
+    //搜索视频
+    public List<Map<String, Object>> searchVideo(String keyword) {
+        if (keyword == null || keyword.isBlank()) return videoMapper.selectAllVideo();
+        return videoMapper.searchVideo(keyword.trim());
+    }
+
+    //获取视频文件（用于播放），不存在返回null
+    public File getVideoFile(long id) {
+        List<Map<String, Object>> list = videoMapper.selectVideoPathById(id);
+        if (list.isEmpty()) return null;
+        Object path = list.get(0).get("video_path");
+        if (path == null) return null;
+        File file = new File(path.toString());
+        return file.exists() ? file : null;
+    }
+
+    //修改标题（只能改自己的）
+    public Map<String, Object> editTitle(long userId, long videoId, String title) {
+        if (title == null || title.isBlank())
+            return Map.of("success", false, "message", "标题不能为空");
+        int k = videoMapper.editVideoTitle(userId, videoId, title);
+        if (k == 0) return Map.of("success", false, "message", "修改失败（只能修改自己的视频）");
+        return Map.of("success", true, "message", "修改成功");
+    }
+
+    //删除视频（只能删自己的），同时删除磁盘文件和相关的点赞/评论
+    public Map<String, Object> deleteVideo(long userId, long videoId) {
+        List<Map<String, Object>> list = videoMapper.selectVideoPathById(videoId);
+        int k = videoMapper.deleteMyVideo(userId, videoId);
+        if (k == 0) return Map.of("success", false, "message", "删除失败（只能删除自己的视频）");
+        videoMapper.deleteLikesByVideo(videoId);
+        videoMapper.deleteCommentsByVideo(videoId);
+        if (!list.isEmpty()) {
+            Object path = list.get(0).get("video_path");
+            if (path != null && new File(path.toString()).delete())
+                log.info("已删除视频文件：{}", path);
+        }
+        return Map.of("success", true, "message", "删除成功");
+    }
+
+    //写视频评论
+    public Map<String, Object> writeComment(long videoId, long userId, String contents) {
+        if (contents == null || contents.isBlank())
+            return Map.of("success", false, "message", "评论不能为空");
+        int k = videoMapper.writeVideoComment(videoId, userId, contents.trim());
+        if (k == 0) return Map.of("success", false, "message", "评论失败");
+        return Map.of("success", true, "message", "评论成功");
+    }
+
+    //查看某个视频的评论
+    public List<Map<String, Object>> selectCommentsByVideoId(long videoId) {
+        return videoMapper.selectCommentsByVideoId(videoId);
+    }
+
+    //播放量 +1
+    public void recordView(long videoId) {
+        videoMapper.incrementView(videoId);
+    }
+
+    //点赞/取消点赞
+    public Map<String, Object> toggleLike(long videoId, long userId) {
+        boolean liked = videoMapper.toggleLike(videoId, userId);
+        return Map.of("success", true, "liked", liked, "likeCount", videoMapper.countLikes(videoId));
+    }
+
+    //查询当前用户点赞状态和获赞数
+    public Map<String, Object> getLikeStatus(long videoId, long userId) {
+        return Map.of("liked", videoMapper.isLiked(videoId, userId),
+                "likeCount", videoMapper.countLikes(videoId));
+    }
+    //查找用户
+    public List<Map<String,Object>> findUserByVirtualName(String virtualName){
+        return videoMapper.findUserByVirtualName(virtualName);
+    }
+}
