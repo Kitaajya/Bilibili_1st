@@ -1,4 +1,8 @@
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\Bilibili1stApplication.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\BusinessException.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\GlobalExceptionHandler.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\Result.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\ResultMapper.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\DynamicController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\LogInController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\PurchaseController.java

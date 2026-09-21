@@ -41,7 +41,21 @@ public class PurchaseMapper {
     public int deleteProduct(int id,String name){
         return jdbcTemplate.update("DELETE FROM bilibili_purchase WHERE id=? AND product_name=?",id,name);
     }
-
+    //添加宣传标语
+    public int addSpread(int id,String productName,String text){
+        return jdbcTemplate.update("INSERT INTO bilibili_purchase(id,product_name,spread) VALUES(?,?,?)",id,productName,text);
+    }
+    //删除宣传标语
+    public int deleteSpread(int id,String productName,String text){
+        return jdbcTemplate.update("DELETE FROM bilibili_purchase WHERE id=? AND spread=?",id,text);
+    }
+    //修改宣传标语
+    public int editSpread(int id,String productName,String text){
+        return jdbcTemplate.update("""
+            UPDATE bilibili_purchase 
+                WHERE id=? AND spread=? AND product_name=?
+        """,id,text,productName);
+    }
     //=========================================买家权限================================================
     //通过商品id或商品名得到商品价格
     public List<Map<String,Object>> selectPrice(int id,String name){

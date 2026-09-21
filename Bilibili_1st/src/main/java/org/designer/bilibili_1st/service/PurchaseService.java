@@ -3,8 +3,10 @@ package org.designer.bilibili_1st.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.designer.bilibili_1st.mapper.PurchaseMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
+import javax.naming.Name;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,24 @@ public class PurchaseService {
         int k=purchaseMapper.deleteProduct(id,name);
         if(k==0) return Map.of("success",false,"message","删除失败");
         return Map.of("success",true,"message","删除成功");
+    }
+    //添加宣传标语
+    public Map<String,Object> addSpread(int id,String productName,String text){
+        int k=purchaseMapper.addSpread(id,productName,text);
+        if(k<=0) return Map.of("success",false,"message","添加失败");
+        return Map.of("success",true,"message","添加成功");
+    }
+    //删除宣传标语
+    public Map<String,Object> deleteSpread(int id,String productName,String text) {
+        int k=purchaseMapper.deleteSpread(id, productName, text);
+        if(k<=0) return Map.of("success",false,"message","删除失败");
+        return Map.of("success",true,"message","删除成功");
+    }
+    //修改宣传标语
+    public Map<String,Object> editSpread(int id,String productName,String text){
+        int k=purchaseMapper.editSpread(id, productName, text);
+        if(k<=0) return Map.of("success",false,"message","修改失败");
+        return Map.of("success",true,"message","修改成功");
     }
     //=========================================买家权限================================================
     //通过商品id和商品名得到商品价格

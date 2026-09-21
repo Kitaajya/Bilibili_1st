@@ -22,4 +22,5 @@ public class PurchaseEntity {
     private int quantity;
     @JsonProperty("total")
     private BigDecimal total;
+    private String spread;  //宣传标语
 }

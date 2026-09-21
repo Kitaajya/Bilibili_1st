@@ -19,8 +19,32 @@ function setUser(user) {
     localStorage.setItem('bilibili_user', JSON.stringify(user));
 }
 
+// 需要登录的操作统一入口：未登录则提示并返回 false
+function requireLogin() {
+    if (!currentUser) {
+        showToast('请先登录后再操作');
+        return false;
+    }
+    return true;
+}
+
+// 打开登录页（游客点击“登录”时调用）
+function showLoginPage() {
+    document.getElementById('loginPage').classList.remove('hidden');
+}
+
 function qs(params) {
     return '?' + new URLSearchParams(params).toString();
+}
+
+// 统一解析后端 Result<T>：成功返回内层 data，失败抛错
+async function unwrap(res) {
+    if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
+    const body = await res.json();
+    if (body && body.success === false) {
+        throw new Error(body.message || '操作失败');
+    }
+    return body && ('data' in body) ? body.data : body;
 }
 
 async function postJson(url, body) {
@@ -29,30 +53,22 @@ async function postJson(url, body) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
-    return res.json();
+    return unwrap(res);
 }
 
 async function getJson(url) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
-    return res.json();
+    return unwrap(res);
 }
 
 async function sendForm(url, params) {
     const res = await fetch(url + qs(params), { method: 'POST' });
-    if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || '操作失败');
-    return data;
+    return unwrap(res);
 }
 
 async function sendDelete(url, params) {
     const res = await fetch(url + qs(params), { method: 'DELETE' });
-    if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || '操作失败');
-    return data;
+    return unwrap(res);
 }
 
 function fmtMoney(n) {
@@ -102,7 +118,6 @@ async function doRegister(e) {
     };
     try {
         const data = await postJson('/api/log/in/register', body);
-        if (!data.success) { showToast(data.message); return; }
         setUser({ userId: data.userId, virtualName: data.virtualName, role: data.role || 'USER' });
         showToast('注册成功，已自动登录');
         enterMain();
@@ -119,7 +134,6 @@ async function doLogin(e) {
             qqEmail: f.get('qqEmail'),
             password: f.get('password'),
         });
-        if (!data.success) { showToast(data.message); return; }
         setUser({ userId: data.userId, virtualName: data.virtualName, role: data.role || 'USER' });
         showToast('登录成功');
         enterMain();
@@ -130,7 +144,10 @@ async function doLogin(e) {
 
 function renderUserArea() {
     const area = document.getElementById('userArea');
-    if (!currentUser) { area.innerHTML = ''; return; }
+    if (!currentUser) {
+        area.innerHTML = '<button class="btn-primary" onclick="showLoginPage()">登录 / 注册</button>';
+        return;
+    }
     const name = currentUser.virtualName || '用户';
     const badge = currentUser.role === 'MERCHANT'
         ? '<span class="merchant-badge">商家</span>' : '';
@@ -144,9 +161,12 @@ function logout() {
     setUser(null);
     document.getElementById('videoDetail').classList.add('hidden');
     document.getElementById('userProfile').classList.add('hidden');
-    document.getElementById('appMain').classList.add('hidden');
-    document.getElementById('header').classList.add('hidden');
-    document.getElementById('loginPage').classList.remove('hidden');
+    // 退出后回到游客模式：仍留在主界面，仅刷新用户区
+    document.getElementById('appMain').classList.remove('hidden');
+    document.getElementById('header').classList.remove('hidden');
+    renderUserArea();
+    showToast('已退出登录');
+    goHome();
 }
 
 function enterMain() {
@@ -248,6 +268,7 @@ async function loadAllVideos() {
 }
 
 async function loadMyVideos() {
+    if (!requireLogin()) return;
     hideUserResults();
     document.getElementById('videoListTitle').textContent = '我的视频';
     const grid = document.getElementById('videoGrid');
@@ -282,7 +303,7 @@ function makeVideoCard(v) {
     const g2 = 'hsl(' + ((hue + 70) % 360) + ',55%,58%)';
     const date = (v.create_time || '').replace('T', ' ').slice(0, 16);
 
-    const mine = v.user_id == currentUser.userId ? `
+    const mine = (currentUser && v.user_id == currentUser.userId) ? `
         <span style="margin-left:auto;display:flex;gap:10px">
             <a style="color:var(--primary)"
                onclick="event.stopPropagation();editVideoTitle(${v.id})" href="javascript:void(0)">改名</a>
@@ -307,6 +328,7 @@ function makeVideoCard(v) {
 
 // ==================== 视频上传 / 编辑 / 删除 ====================
 function showUploadVideo() {
+    if (!requireLogin()) return;
     openModal(`
         <h3 style="margin:0 0 10px">发布视频</h3>
         <input id="videoTitle" placeholder="视频标题" style="margin:10px 0">
@@ -316,6 +338,7 @@ function showUploadVideo() {
 }
 
 async function submitUploadVideo() {
+    if (!requireLogin()) return;
     const title = document.getElementById('videoTitle').value.trim();
     const file = document.getElementById('videoFile').files[0];
     if (!title) return showToast('标题不能为空');
@@ -330,8 +353,7 @@ async function submitUploadVideo() {
     fd.append('file', file);
     try {
         const res = await fetch('/api/video/upload', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message || '上传失败');
+        await unwrap(res);
         showToast('上传成功');
         closeModal();
         goHome();
@@ -343,6 +365,7 @@ async function submitUploadVideo() {
 }
 
 function editVideoTitle(id) {
+    if (!requireLogin()) return;
     openModal(`
         <h3 style="margin:0 0 10px">修改视频标题</h3>
         <input id="videoNewTitle" placeholder="新标题" style="margin:10px 0">
@@ -351,6 +374,7 @@ function editVideoTitle(id) {
 }
 
 async function submitEditVideoTitle(videoId) {
+    if (!requireLogin()) return;
     const title = document.getElementById('videoNewTitle').value.trim();
     if (!title) return showToast('标题不能为空');
     try {
@@ -364,6 +388,7 @@ async function submitEditVideoTitle(videoId) {
 }
 
 async function deleteVideo(videoId) {
+    if (!requireLogin()) return;
     if (!confirm('确定删除该视频？')) return;
     try {
         await sendDelete('/api/video/delete', {
@@ -493,8 +518,8 @@ function openProfile(userId) {
         getJson('/api/user/profile' + qs({ userId })),
         getJson('/api/video/byUser' + qs({ userId })),
     ]).then(([profile, videos]) => {
-        if (!profile.success) {
-            showToast(profile.message || '用户不存在');
+        if (!profile) {
+            showToast('用户不存在');
             backFromProfile();
             return;
         }
@@ -637,6 +662,7 @@ async function viewComments(id) {
 }
 
 async function writeComment(productId) {
+    if (!requireLogin()) return;
     const text = document.getElementById('cmtText').value.trim();
     if (!text) return showToast('评论不能为空');
     try {
@@ -650,6 +676,7 @@ async function writeComment(productId) {
 
 // ==================== 订单 ====================
 async function loadOrders() {
+    if (!requireLogin()) return;
     try {
         const list = await getJson('/api/purchase/controller/select/order');
         const tbody = document.querySelector('#orderTable tbody');
@@ -678,6 +705,7 @@ async function loadOrders() {
 }
 
 function editMyComment(id) {
+    if (!requireLogin()) return;
     openModal(`
         <h3>修改我的评论（订单 ${id}）</h3>
         <textarea id="editCmt" placeholder="新的评价内容" style="width:100%;height:90px;margin:10px 0"></textarea>
@@ -686,6 +714,7 @@ function editMyComment(id) {
 }
 
 async function submitEditComment(id) {
+    if (!requireLogin()) return;
     const text = document.getElementById('editCmt').value.trim();
     if (!text) return showToast('评论不能为空');
     try {
@@ -699,6 +728,7 @@ async function submitEditComment(id) {
 }
 
 async function deleteMyComment(id) {
+    if (!requireLogin()) return;
     try {
         await sendDelete('/api/purchase/controller/delete/my/comments', {
             userId: currentUser.userId, id,
@@ -717,6 +747,7 @@ async function loadAllDynamics() {
 }
 
 async function loadMyDynamics() {
+    if (!requireLogin()) return;
     try {
         const list = await getJson('/api/dynamic/byUser' + qs({ userId: currentUser.userId }));
         renderDynamics(list);
@@ -738,7 +769,7 @@ function renderDynamics(list) {
             <div class="d-content">${escapeHtml(d.contents || '')}</div>
             <div class="d-meta">用户ID：${d.user_id} · ${(d.create_time || '').replace('T', ' ')}</div>
             <div class="d-actions">
-                ${d.user_id == currentUser.userId ? `
+                ${(currentUser && d.user_id == currentUser.userId) ? `
                     <button class="btn" onclick="editDynamic(${d.id})">编辑</button>
                     <button class="btn-danger" onclick="deleteDynamic(${d.id})">删除</button>` : ''}
             </div>`;
@@ -747,6 +778,7 @@ function renderDynamics(list) {
 }
 
 function showWriteDynamic() {
+    if (!requireLogin()) return;
     openModal(`
         <h3>发布动态</h3>
         <input id="dynTitle" placeholder="标题" style="margin:10px 0">
@@ -756,6 +788,7 @@ function showWriteDynamic() {
 }
 
 async function submitDynamic() {
+    if (!requireLogin()) return;
     const title = document.getElementById('dynTitle').value.trim();
     const contents = document.getElementById('dynContent').value.trim();
     if (!contents) return showToast('内容不能为空');
@@ -768,6 +801,7 @@ async function submitDynamic() {
 }
 
 function editDynamic(id) {
+    if (!requireLogin()) return;
     const card = [...document.querySelectorAll('.dynamic-card')].find(c =>
         c.querySelector('.d-actions')?.firstElementChild?.onclick?.toString().includes(String(id)));
     const title = card?.querySelector('.d-title')?.textContent.replace('（无标题）', '') || '';
@@ -781,6 +815,7 @@ function editDynamic(id) {
 }
 
 async function submitEditDynamic(dynamicId) {
+    if (!requireLogin()) return;
     const title = document.getElementById('dynTitle').value.trim();
     const contents = document.getElementById('dynContent').value.trim();
     try {
@@ -794,6 +829,7 @@ async function submitEditDynamic(dynamicId) {
 }
 
 async function deleteDynamic(dynamicId) {
+    if (!requireLogin()) return;
     try {
         await sendDelete('/api/dynamic/delete', {
             userId: currentUser.userId, dynamicId,
@@ -805,6 +841,7 @@ async function deleteDynamic(dynamicId) {
 
 // ==================== 管理权限 ====================
 async function addProduct(e) {
+    if (!requireLogin()) return;
     e.preventDefault();
     const f = new FormData(e.target);
     try {
@@ -819,6 +856,7 @@ async function addProduct(e) {
 }
 
 async function editPrice(e) {
+    if (!requireLogin()) return;
     e.preventDefault();
     const f = new FormData(e.target);
     try {
@@ -831,6 +869,7 @@ async function editPrice(e) {
 }
 
 async function editName(e) {
+    if (!requireLogin()) return;
     e.preventDefault();
     const f = new FormData(e.target);
     try {
@@ -843,6 +882,7 @@ async function editName(e) {
 }
 
 async function deleteProduct(e) {
+    if (!requireLogin()) return;
     e.preventDefault();
     const f = new FormData(e.target);
     if (!confirm('确定删除该商品？')) return;
@@ -899,9 +939,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    if (currentUser) {
-        enterMain();
-    } else {
-        document.getElementById('loginPage').classList.remove('hidden');
-    }
+    // 无论是否登录，都进入主界面（未登录为游客模式，可浏览但不可互动）
+    enterMain();
 });
+
+// 完毕
