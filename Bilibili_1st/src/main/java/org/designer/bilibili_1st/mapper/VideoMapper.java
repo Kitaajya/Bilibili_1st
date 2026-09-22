@@ -41,7 +41,7 @@ public class VideoMapper {
     private static final String SELECT_WITH_UPLOADER = """
             SELECT v.id, v.user_id, v.title, v.video_path, v.create_time, v.view_count,
                    (SELECT COUNT(*) FROM video_like vl WHERE vl.video_id = v.id) AS like_count,
-                   u.virtualName AS uploader
+                   u.virtualName AS uploader, u.avatar AS uploader_avatar
             FROM video v
             LEFT JOIN bilibili_user_log_in u ON v.user_id = u.id
             """;

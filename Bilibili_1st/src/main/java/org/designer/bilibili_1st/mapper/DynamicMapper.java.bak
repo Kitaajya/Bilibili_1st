@@ -43,30 +43,6 @@ public class DynamicMapper {
         return jdbcTemplate.queryForList("SELECT * FROM dynamic");
     }
 
-    //写动态评论（parentId 为 null 表示顶级评论）
-    public int writeComment(long dynamicId, long userId, Long parentId, String contents) {
-        return jdbcTemplate.update(
-                "INSERT INTO dynamic_comment(dynamic_id,user_id,parent_id,contents) VALUES (?,?,?,?)",
-                dynamicId, userId, parentId, contents);
-    }
-
-    //查看某条动态的所有评论（带评论者昵称和头像）
-    public List<Map<String, Object>> selectComments(long dynamicId) {
-        return jdbcTemplate.queryForList("""
-                SELECT c.id, c.dynamic_id, c.user_id, c.parent_id, c.contents, c.create_time,
-                       u.virtualName AS userName, u.avatar AS userAvatar
-                FROM dynamic_comment c
-                LEFT JOIN bilibili_user_log_in u ON c.user_id = u.id
-                WHERE c.dynamic_id = ?
-                ORDER BY c.create_time ASC
-                """, dynamicId);
-    }
-
-    //删除我自己的评论
-    public int deleteMyComment(long userId, long commentId) {
-        return jdbcTemplate.update(
-                "DELETE FROM dynamic_comment WHERE id=? AND user_id=?", commentId, userId);
-    }
     //查看某个人的动态
     public List<Map<String, Object>> selectDynamicByUserId(long userId) {
         return jdbcTemplate.queryForList("SELECT * FROM dynamic WHERE user_id=?", userId);

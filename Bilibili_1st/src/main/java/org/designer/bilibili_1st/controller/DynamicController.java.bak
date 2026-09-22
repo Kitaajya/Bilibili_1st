@@ -46,29 +46,6 @@ public class DynamicController {
         return Result.success(dynamicMapper.selectAllDynamic());
     }
 
-    @PostMapping("/comment/write")
-    public Result<Void> writeComment(@RequestParam long dynamicId,
-                                     @RequestParam long userId,
-                                     @RequestParam(required = false) Long parentId,
-                                     @RequestParam String contents) {
-        if (contents == null || contents.isBlank()) return Result.fail("评论不能为空");
-        int k = dynamicMapper.writeComment(dynamicId, userId, parentId, contents);
-        if (k == 0) return Result.fail("评论失败");
-        return Result.successMessage("评论成功");
-    }
-
-    @GetMapping("/comment/list")
-    public Result<List<Map<String, Object>>> listComments(@RequestParam long dynamicId) {
-        return Result.success(dynamicMapper.selectComments(dynamicId));
-    }
-
-    @DeleteMapping("/comment/delete")
-    public Result<Void> deleteComment(@RequestParam long userId,
-                                      @RequestParam long commentId) {
-        int k = dynamicMapper.deleteMyComment(userId, commentId);
-        if (k == 0) return Result.fail("删除失败（只能删自己的评论）");
-        return Result.successMessage("删除成功");
-    }
     @GetMapping("/byUser")
     public Result<List<Map<String, Object>>> selectDynamicByUserId(@RequestParam long userId) {
         return Result.success(dynamicMapper.selectDynamicByUserId(userId));

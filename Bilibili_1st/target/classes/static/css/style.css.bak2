@@ -631,35 +631,3 @@ html[data-theme="dark"] .table td { background: var(--card); border-color: var(-
 html[data-theme="dark"] input,
 html[data-theme="dark"] textarea,
 html[data-theme="dark"] select { background: var(--card); color: var(--text-main); border-color: var(--border); }
-/* ========== 深色模式精确覆盖 ========== */
-html[data-theme="dark"] .btn { background: #2c2f36; color: var(--text-main); }
-html[data-theme="dark"] .btn:hover { background: #3a3e47; }
-html[data-theme="dark"] .comment .name { color: var(--text-sub); }
-html[data-theme="dark"] .dynamic-card .d-content { color: var(--text-sub); }
-html[data-theme="dark"] .table th { background: #23262d; color: var(--text-sub); }
-html[data-theme="dark"] .skeleton .cover,
-html[data-theme="dark"] .skeleton .line { background: #23262d; }
-html[data-theme="dark"] ::placeholder { color: var(--text-sub); }
-html[data-theme="dark"] .search input { background: var(--card); color: var(--text-main); }
-/* 深色模式：修复白底容器（避免浅字白底看不见） */
-html[data-theme="dark"] .dynamic-card { background: var(--card); box-shadow: 0 1px 6px rgba(0,0,0,.4); }
-html[data-theme="dark"] .table { background: var(--card); }
-html[data-theme="dark"] .table td { background: var(--card); color: var(--text-main); border-color: var(--border); }
-html[data-theme="dark"] .table tr:hover td { background: #23262d; }
-
-/* ========== 动态评论区 ========== */
-.d-comments { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
-.d-cloading { color: var(--text-sub); font-size: 13px; }
-.d-comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-.d-comment { display: flex; gap: 8px; align-items: flex-start; }
-.d-comment-body { flex: 1; min-width: 0; }
-.d-comment-name { font-size: 13px; font-weight: 600; color: var(--text-sub); }
-.d-comment-text { font-size: 14px; color: var(--text-main); margin: 2px 0 4px; white-space: pre-wrap; word-break: break-word; }
-.d-comment-ops { font-size: 12px; display: flex; gap: 14px; }
-.d-comment-ops a { color: var(--text-sub); }
-.d-comment-ops a:hover { color: var(--primary); }
-.d-comment-ops .d-del:hover { color: #f04134; }
-.d-replies { margin-left: 20px; margin-top: 8px; padding-left: 10px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-.d-comment-form { display: flex; gap: 8px; }
-.d-comment-input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text-main); }
-html[data-theme="dark"] .d-comment-input { background: #23262d; }

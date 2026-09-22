@@ -7,6 +7,25 @@ let detailReturn = 'home';
 const actState = { like: false, coin: false, fav: false };
 
 // ==================== 工具函数 ====================
+// ==================== 主题切换 ====================
+function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const btn = document.getElementById("themeBtn");
+    if (btn) btn.textContent = theme === "dark" ? "\u2600\ufe0f" : "\uD83C\uDF19";
+    localStorage.setItem("bilibili_theme", theme);
+}
+
+function toggleTheme() {
+    const cur = document.documentElement.getAttribute("data-theme") || "light";
+    applyTheme(cur === "dark" ? "light" : "dark");
+}
+
+// 页面加载时恢复主题（默认跟随系统偏好）
+(function initTheme() {
+    const saved = localStorage.getItem("bilibili_theme");
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(saved || (prefersDark ? "dark" : "light"));
+})();
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -17,6 +36,40 @@ function showToast(msg) {
 function setUser(user) {
     currentUser = user;
     localStorage.setItem('bilibili_user', JSON.stringify(user));
+}
+
+// 头像 HTML：有 avatar 显示图片，否则显示首字母
+function avatarHtml(user, size) {
+    size = size || 40;
+    const name = (user && user.virtualName) || "用户";
+    const first = escapeHtml(name.charAt(0));
+    if (user && user.avatar) {
+        const url = "/api/user/avatar/" + encodeURIComponent(user.avatar);
+        return "<span class=\"avatar-wrap\" style=\"width:" + size + "px;height:" + size + "px\">" +
+            "<img class=\"user-avatar\" src=\"" + url + "\" alt=\"" + escapeHtml(name) + "\" " +
+            "onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex'\">" +
+            "<span class=\"user-avatar avatar-fallback\" style=\"display:none\">" + first + "</span>" +
+            "</span>";
+    }
+    return "<span class=\"user-avatar\">" + first + "</span>";
+}
+
+// 上传头像
+async function uploadAvatar(file) {
+    if (!requireLogin() || !file) return;
+    const fd = new FormData();
+    fd.append("userId", currentUser.userId);
+    fd.append("file", file);
+    try {
+        const res = await fetch("/api/user/update/avatar", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || "上传失败"); return; }
+        setUser(Object.assign({}, currentUser, { avatar: json.data.avatar }));
+        renderUserArea();
+        showToast("头像更新成功");
+    } catch (e) {
+        showToast("上传失败：" + e.message);
+    }
 }
 
 // 需要登录的操作统一入口：未登录则提示并返回 false
@@ -152,8 +205,10 @@ function renderUserArea() {
     const badge = currentUser.role === 'MERCHANT'
         ? '<span class="merchant-badge">商家</span>' : '';
     area.innerHTML = `
-        <div class="user-avatar" title="${escapeHtml(name)}">${escapeHtml(name.charAt(0))}</div>
+        ${avatarHtml(currentUser)}
         <span class="user-name">${escapeHtml(name)} ${badge}</span>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
+        <button class="btn" onclick="document.getElementById('avatarInput').click()">换头像</button>
         <button class="logout-btn" onclick="logout()">退出登录</button>`;
 }
 
@@ -319,7 +374,7 @@ function makeVideoCard(v) {
         </div>
         <div class="title" title="${escapeHtml(v.title || '')}">${escapeHtml(v.title || '')}</div>
         <div class="up">
-            <span class="up-avatar" onclick="event.stopPropagation();openProfile(${v.user_id})">${escapeHtml(upName.charAt(0))}</span>
+            <span onclick="event.stopPropagation();openProfile(${v.user_id})">${avatarHtml({ virtualName: upName, avatar: v.uploader_avatar }, 28)}</span>
             <span class="up-name" onclick="event.stopPropagation();openProfile(${v.user_id})">${escapeHtml(upName)}</span>
             ${mine}
         </div>`;
@@ -772,8 +827,16 @@ function renderDynamics(list) {
                 ${(currentUser && d.user_id == currentUser.userId) ? `
                     <button class="btn" onclick="editDynamic(${d.id})">编辑</button>
                     <button class="btn-danger" onclick="deleteDynamic(${d.id})">删除</button>` : ''}
+            </div>
+            <div class="d-comments" id="dcomments-${d.id}">
+                <div class="d-comment-list" id="dclist-${d.id}"><span class="d-cloading">加载评论中…</span></div>
+                <div class="d-comment-form">
+                    <input class="d-comment-input" id="dcinput-${d.id}" placeholder="写评论…">
+                    <button class="btn" onclick="submitDynamicComment(${d.id},null)">发送</button>
+                </div>
             </div>`;
         box.appendChild(card);
+        loadDynamicComments(d.id);
     });
 }
 
@@ -944,3 +1007,84 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 完毕
+
+// ==================== 动态评论 ====================
+async function loadDynamicComments(dynamicId) {
+    const box = document.getElementById("dclist-" + dynamicId);
+    if (!box) return;
+    try {
+        const list = await getJson("/api/dynamic/comment/list" + qs({ dynamicId }));
+        renderDynamicComments(dynamicId, list);
+    } catch (e) {
+        box.innerHTML = "<span class=\"d-cloading\">评论加载失败</span>";
+    }
+}
+
+function renderDynamicComments(dynamicId, list) {
+    const box = document.getElementById("dclist-" + dynamicId);
+    if (!box) return;
+    if (!list || !list.length) { box.innerHTML = "<span class=\"d-cloading\">还没有评论，来抢沙发~</span>"; return; }
+    const tops = list.filter(c => c.parent_id == null);
+    const replies = list.filter(c => c.parent_id != null);
+    box.innerHTML = tops.map(c => {
+        const kids = replies.filter(r => r.parent_id == c.id);
+        return commentItemHtml(c, dynamicId, false) +
+            (kids.length ? "<div class=\"d-replies\">" + kids.map(k => commentItemHtml(k, dynamicId, true)).join("") + "</div>" : "");
+    }).join("");
+}
+
+function commentItemHtml(c, dynamicId, isReply) {
+    const name = c.userName || ("用户" + c.user_id);
+    const mine = currentUser && c.user_id == currentUser.userId;
+    const av = avatarHtml({ virtualName: name, avatar: c.userAvatar }, isReply ? 24 : 30);
+    return "<div class=\"d-comment\">" + av +
+        "<div class=\"d-comment-body\">" +
+        "<div class=\"d-comment-name\">" + escapeHtml(name) + "</div>" +
+        "<div class=\"d-comment-text\">" + escapeHtml(c.contents || "") + "</div>" +
+        "<div class=\"d-comment-ops\">" +
+        "<a href=\"javascript:void(0)\" onclick=\"replyDynamicComment(" + dynamicId + "," + c.id + "," + JSON.stringify(escapeHtml(name)) + ")\">回复</a>" +
+        (mine ? "<a href=\"javascript:void(0)\" class=\"d-del\" onclick=\"deleteDynamicComment(" + dynamicId + "," + c.id + ")\">删除</a>" : "") +
+        "</div></div></div>";
+}
+
+function replyDynamicComment(dynamicId, parentId, toName) {
+    if (!requireLogin()) return;
+    const input = document.getElementById("dcinput-" + dynamicId);
+    if (!input) return;
+    input.placeholder = "回复 @" + toName + "：";
+    input.focus();
+    input.dataset.parentId = parentId;
+}
+
+async function submitDynamicComment(dynamicId, parentId) {
+    if (!requireLogin()) return;
+    const input = document.getElementById("dcinput-" + dynamicId);
+    const contents = (input.value || "").trim();
+    if (!contents) { showToast("评论不能为空"); return; }
+    const pid = parentId || input.dataset.parentId || null;
+    const fd = new FormData();
+    fd.append("dynamicId", dynamicId);
+    fd.append("userId", currentUser.userId);
+    if (pid) fd.append("parentId", pid);
+    fd.append("contents", contents);
+    try {
+        const res = await fetch("/api/dynamic/comment/write", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || "评论失败"); return; }
+        input.value = "";
+        input.placeholder = "写评论…";
+        delete input.dataset.parentId;
+        showToast("评论成功");
+        loadDynamicComments(dynamicId);
+    } catch (e) { showToast(e.message); }
+}
+
+async function deleteDynamicComment(dynamicId, commentId) {
+    if (!requireLogin()) return;
+    if (!confirm("确定删除这条评论？")) return;
+    try {
+        await sendDelete("/api/dynamic/comment/delete", { userId: currentUser.userId, commentId });
+        showToast("删除成功");
+        loadDynamicComments(dynamicId);
+    } catch (e) { showToast(e.message); }
+}

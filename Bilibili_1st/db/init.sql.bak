@@ -71,15 +71,4 @@ CREATE TABLE IF NOT EXISTS video_comment(
     FOREIGN KEY (user_id) REFERENCES bilibili_user_log_in(id)
 );
 
--- 动态评论（parent_id 为 NULL 表示顶级评论，否则是回复某条评论）
-CREATE TABLE IF NOT EXISTS dynamic_comment(
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    dynamic_id  BIGINT NOT NULL,
-    user_id     BIGINT NOT NULL,
-    parent_id   BIGINT DEFAULT NULL,
-    contents    TEXT NOT NULL,
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (dynamic_id) REFERENCES dynamic(id),
-    FOREIGN KEY (user_id) REFERENCES bilibili_user_log_in(id)
-);
 SELECT * FROM bilibili_user_log_in;
