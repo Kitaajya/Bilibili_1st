@@ -96,13 +96,10 @@ public class VideoService {
     //删除视频（只能删自己的），同时删除磁盘文件和相关的点赞/评论
     public Map<String, Object> deleteVideo(long userId, long videoId) {
         List<Map<String, Object>> list = videoMapper.selectVideoPathById(videoId);
-        // 先删所有引用该视频的子表记录，否则外键约束会阻止删除
-        videoMapper.deleteLikesByVideo(videoId);
-        videoMapper.deleteCommentsByVideo(videoId);
-        videoMapper.deleteHistoryByVideo(videoId);
-        // 最后删视频本身
         int k = videoMapper.deleteMyVideo(userId, videoId);
         if (k == 0) return Map.of("success", false, "message", "删除失败（只能删除自己的视频）");
+        videoMapper.deleteLikesByVideo(videoId);
+        videoMapper.deleteCommentsByVideo(videoId);
         if (!list.isEmpty()) {
             Object path = list.get(0).get("video_path");
             if (path != null && new File(path.toString()).delete())

@@ -3,9 +3,11 @@ package org.designer.bilibili_1st.controller;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.designer.bilibili_1st.common.Result;
 import org.designer.bilibili_1st.common.ResultMapper;
 import org.designer.bilibili_1st.entity.VideoEntity;
+import org.designer.bilibili_1st.mapper.VideoMapper;
 import org.designer.bilibili_1st.service.VideoService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,11 +18,13 @@ import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/video")
 @RequiredArgsConstructor
 public class VideoController {
     private final VideoService videoService;
+    private final VideoMapper videoMapper;
 
     @PostMapping("/upload")
     public Result<Map<String, Object>> upload(@RequestParam long userId,
@@ -148,6 +152,27 @@ public class VideoController {
     public Result<Map<String, Object>> likeStatus(@RequestParam long videoId,
                                                   @RequestParam(required = false) Long userId) {
         return ResultMapper.from(videoService.getLikeStatus(videoId, userId == null ? -1 : userId));
+    }
+    @GetMapping("/byLikes")
+    public Result<List<Map<String, Object>>> selectVideoByLikes() {
+        return Result.success(videoService.selectVideoByLikes());
+    }
+    @GetMapping("/select/like")
+    //查看谁点赞了我的视频
+    public List<Map<String,Object>> selectWhoGiveMeLike(){
+        return videoMapper.selectWhoGiveMeLike();
+    }
+    @GetMapping("/select/history")
+    //查看观看历史
+    public Result<List<Map<String,Object>>> selectHistoricalVideo(@RequestParam long userId){
+        return Result.success(videoService.selectHistoricalVideo(userId));
+    }
+    @PostMapping("/record/history")
+    //记录/更新观看进度，同一用户同一视频只保留一条，重复观看刷新时间和进度
+    public Result<Map<String,Object>> recordHistory(@RequestParam long userId,
+                                                    @RequestParam long videoId,
+                                                    @RequestParam int progress) {
+        return Result.success(videoService.recordHistory(userId, videoId, progress));
     }
 }
 

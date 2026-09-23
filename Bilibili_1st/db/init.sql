@@ -83,3 +83,28 @@ CREATE TABLE IF NOT EXISTS dynamic_comment(
     FOREIGN KEY (user_id) REFERENCES bilibili_user_log_in(id)
 );
 SELECT * FROM bilibili_user_log_in;
+SELECT v.*,
+       (SELECT COUNT(*) FROM video_like vl WHERE vl.video_id = v.id) AS like_count
+FROM video v
+ORDER BY like_count DESC;
+-- 关注关系
+CREATE TABLE IF NOT EXISTS follow(
+    follower_id  BIGINT NOT NULL,
+    following_id BIGINT NOT NULL,
+    create_time  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, following_id),
+    FOREIGN KEY (follower_id)  REFERENCES bilibili_user_log_in(id),
+    FOREIGN KEY (following_id) REFERENCES bilibili_user_log_in(id)
+);
+-- 观看历史
+CREATE TABLE IF NOT EXISTS video_history(
+    user_id        BIGINT   NOT NULL,
+    video_id       BIGINT   NOT NULL,
+    progress       INT      NOT NULL DEFAULT 0,   -- 看到第几秒，做继续观看
+    last_view_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,  -- 重复观看自动刷新时间
+    PRIMARY KEY (user_id, video_id),
+    INDEX idx_user_time (user_id, last_view_time DESC),
+    FOREIGN KEY (user_id)  REFERENCES bilibili_user_log_in(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES video(id) ON DELETE CASCADE
+);

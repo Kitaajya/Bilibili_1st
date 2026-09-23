@@ -46,6 +46,10 @@ public class UserController {
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
                 .body(new FileSystemResource(f));
     }
+    @PostMapping("/edit/virtualName")
+    public Result<Map<String,Object>> editVirtualName(long id,String virtualName){
+        return Result.success(userService.editVirtualName(id, virtualName));
+    }
 
 }
 

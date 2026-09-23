@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
+<head><!-- 图标
+            E:\2026IDEAJava\Bilibili_1st\src\main\resources\static\img.png
+        -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>哔哩哔哩 1st</title>
+    <title>Bilibili</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<!-- ======== 顶部 Header ======== -->
 <header class="header hidden" id="header">
-    <div class="logo" onclick="goHome()">
-        <div class="bili-icon">B</div>
-        <span>Bilibili 1st</span>
-    </div>
+    <a href="index.html">
+        <!-- 点击图标时，返回主页面-->
+        <img src="img.png" alt="B站图标" width="200" height="150">
+    </a>
     <div class="search">
+
         <input id="searchInput" placeholder="搜索视频、UP主"
                onkeydown="if (event.key === 'Enter') doSearch()">
         <button onclick="doSearch()">搜索</button>
@@ -23,7 +25,7 @@
     <button class="theme-btn" id="themeBtn" title="切换深色/浅色" onclick="toggleTheme()">&#127769;</button>
 </header>
 
-<!-- ======== 登录 / 注册 ======== -->
+<!--登录注册 -->
 <div id="loginPage" class="auth-wrap">
     <div class="auth-card">
         <div class="auth-tabs">
@@ -48,7 +50,7 @@
     </div>
 </div>
 
-<!-- ======== 主布局 ======== -->
+<!-- 主布局 -->
 <div id="appMain" class="hidden">
     <div class="layout">
 
@@ -58,6 +60,7 @@
                 <li class="nav-li" data-page="shop">🛒 商城</li>
                 <li class="nav-li" data-page="dynamic">💬 动态</li>
                 <li class="nav-li" data-page="order">📦 订单</li>
+                <li class="nav-li" data-page="history">🕐 观看历史</li>
                 <li class="divider"></li>
                 <li class="nav-li" data-page="admin">⚙️ 管理</li>
             </ul>
@@ -71,6 +74,7 @@
                     <h2 id="videoListTitle">全部视频</h2>
                     <div class="toolbar">
                         <button class="btn" onclick="loadMyVideos()">我的视频</button>
+                        <button class="btn" onclick="loadVideosByLikes()">按点赞排序</button>
                         <button class="btn-primary" onclick="showUploadVideo()">发布视频</button>
                     </div>
                 </div>
@@ -121,6 +125,14 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </section>
+
+            <!-- 观看历史 -->
+            <section id="page-history" class="page hidden">
+                <div class="toolbar">
+                    <button class="btn-primary" onclick="loadHistory()">刷新历史</button>
+                </div>
+                <div id="historyList"></div>
             </section>
 
             <!-- 管理 -->
@@ -201,7 +213,7 @@
     </section>
 </div>
 
-<!-- ======== 用户主页 ======== -->
+<!--用户主页-->
 <div id="userProfile" class="detail hidden">
     <button class="back-btn" onclick="backFromProfile()">← 返回</button>
     <div class="profile-head">
@@ -212,7 +224,10 @@
                 <span>投稿 <b id="profileVideoCount">0</b></span>
                 <span>播放 <b id="profileTotalView">0</b></span>
                 <span>获赞 <b id="profileTotalLike">0</b></span>
+                <span>关注 <b id="profileFollowingCount">0</b></span>
+                <span>粉丝 <b id="profileFollowerCount">0</b></span>
             </div>
+            <button class="btn-primary" id="followBtn" style="display:none;margin-top:10px" onclick="toggleFollow()">关注</button>
         </div>
     </div>
     <h2 class="result-sub" style="margin-top:24px">TA 的作品</h2>
@@ -225,4 +240,3 @@
 </body>
 </html>
 
-<!-- 完毕 -->

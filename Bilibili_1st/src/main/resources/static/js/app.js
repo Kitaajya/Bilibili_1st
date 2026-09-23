@@ -72,6 +72,29 @@ async function uploadAvatar(file) {
     }
 }
 
+// 修改用户名
+async function editUserName() {
+    if (!requireLogin()) return;
+    const oldName = currentUser.virtualName || '';
+    const newName = prompt('请输入新的用户名', oldName);
+    if (newName === null) return;                 // 用户点取消
+    const trimmed = newName.trim();
+    if (!trimmed) return showToast('用户名不能为空');
+    if (trimmed === oldName) return showToast('用户名没有变化');
+    try {
+        await sendForm('/api/user/edit/virtualName', {
+            id: currentUser.userId,
+            virtualName: trimmed,
+        });
+        // 本地同步更新，避免再去请求一次 profile
+        setUser(Object.assign({}, currentUser, { virtualName: trimmed }));
+        renderUserArea();
+        showToast('更名成功');
+    } catch (err) {
+        showToast(err.message);
+    }
+}
+
 // 需要登录的操作统一入口：未登录则提示并返回 false
 function requireLogin() {
     if (!currentUser) {
@@ -209,6 +232,7 @@ function renderUserArea() {
         <span class="user-name">${escapeHtml(name)} ${badge}</span>
         <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
         <button class="btn" onclick="document.getElementById('avatarInput').click()">换头像</button>
+        <button class="btn" onclick="editUserName()">改名</button>
         <button class="logout-btn" onclick="logout()">退出登录</button>`;
 }
 
@@ -243,6 +267,7 @@ function showPage(name) {
     document.getElementById('page-' + name).classList.remove('hidden');
     if (name === 'order') loadOrders();
     if (name === 'admin') loadBuyers();
+    if (name === 'history') loadHistory();
 }
 
 function goHome() {
@@ -318,6 +343,18 @@ async function loadAllVideos() {
     grid.innerHTML = skeletonHTML(8);
     try {
         const list = await getJson('/api/video/all');
+        renderVideoCards(list);
+    } catch (err) { grid.innerHTML = ''; showToast(err.message); }
+}
+
+// 按点赞量排序显示全部视频
+async function loadVideosByLikes() {
+    hideUserResults();
+    document.getElementById('videoListTitle').textContent = '按点赞量排序';
+    const grid = document.getElementById('videoGrid');
+    grid.innerHTML = skeletonHTML(8);
+    try {
+        const list = await getJson('/api/video/byLikes');
         renderVideoCards(list);
     } catch (err) { grid.innerHTML = ''; showToast(err.message); }
 }
@@ -477,12 +514,14 @@ function openDetail(v, from) {
     resetActs();
     loadLikeStatus();
     loadComments(v.id);
+    startHistoryReport(v.id);
     window.scrollTo({ top: 0 });
 }
 
 function backFromDetail() {
     document.getElementById('videoDetail').classList.add('hidden');
     document.getElementById('detailVideo').removeAttribute('src');
+    stopHistoryReport();
     if (detailReturn === 'profile' && currentProfileUserId != null) {
         openProfile(currentProfileUserId);
     } else {
@@ -587,6 +626,7 @@ function openProfile(userId) {
         document.getElementById('profileVideoCount').textContent = profile.videoCount || 0;
         document.getElementById('profileTotalView').textContent = formatNum(profile.totalView);
         document.getElementById('profileTotalLike').textContent = formatNum(profile.totalLike);
+        loadFollowStatus(userId);
         renderVideoCards(videos, 'profileGrid');
     }).catch(err => {
         grid.innerHTML = '';
@@ -1087,4 +1127,134 @@ async function deleteDynamicComment(dynamicId, commentId) {
         showToast("删除成功");
         loadDynamicComments(dynamicId);
     } catch (e) { showToast(e.message); }
+}
+
+// ==================== 关注 / 粉丝 ====================
+async function loadFollowStatus(userId) {
+    const btn = document.getElementById("followBtn");
+    const fc = document.getElementById("profileFollowerCount");
+    const gc = document.getElementById("profileFollowingCount");
+    try {
+        const viewer = currentUser ? currentUser.userId : "";
+        const s = await getJson("/api/follow/status" + qs({ userId, viewerId: viewer }));
+        if (gc) gc.textContent = s.followingCount || 0;
+        if (fc) fc.textContent = s.followerCount || 0;
+        if (btn) {
+            if (!currentUser || currentUser.userId == userId) {
+                btn.style.display = "none";
+            } else {
+                btn.style.display = "";
+                btn.textContent = s.isFollowing ? "已关注" : "关注";
+                btn.classList.toggle("btn", s.isFollowing);
+                btn.classList.toggle("btn-primary", !s.isFollowing);
+            }
+        }
+    } catch (e) { /* ignore */ }
+}
+
+async function toggleFollow() {
+    if (!requireLogin()) return;
+    const target = currentProfileUserId;
+    if (!target || target == currentUser.userId) return;
+    const fd = new FormData();
+    fd.append("followerId", currentUser.userId);
+    fd.append("followingId", target);
+    try {
+        const res = await fetch("/api/follow/toggle", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || "操作失败"); return; }
+        showToast(json.data.following ? "已关注" : "已取关");
+        loadFollowStatus(target);
+    } catch (e) { showToast(e.message); }
+}
+
+// ==================== 观看历史上报 ====================
+let historyReportTimer = null;
+let historyLastReport = 0;
+
+function startHistoryReport(videoId) {
+    stopHistoryReport();
+    historyLastReport = 0;
+    const videoEl = document.getElementById('detailVideo');
+    if (!videoEl) return;
+    videoEl.ontimeupdate = () => {
+        const now = Date.now();
+        if (now - historyLastReport < 5000) return;
+        reportHistory(videoId, Math.floor(videoEl.currentTime));
+        historyLastReport = now;
+    };
+    historyReportTimer = setInterval(() => {
+        if (videoEl && !videoEl.paused && videoEl.currentTime > 0) {
+            reportHistory(videoId, Math.floor(videoEl.currentTime));
+        }
+    }, 15000);
+}
+
+function stopHistoryReport() {
+    const videoEl = document.getElementById('detailVideo');
+    if (videoEl) videoEl.ontimeupdate = null;
+    if (historyReportTimer) {
+        clearInterval(historyReportTimer);
+        historyReportTimer = null;
+    }
+    if (currentUser && currentVideoData && videoEl && videoEl.currentTime > 0) {
+        reportHistory(currentVideoData.id, Math.floor(videoEl.currentTime));
+    }
+}
+
+function reportHistory(videoId, progress) {
+    if (!currentUser || !videoId) return;
+    sendForm('/api/video/record/history', {
+        userId: currentUser.userId,
+        videoId: videoId,
+        progress: progress
+    }).catch(() => {});
+}
+
+// ==================== 观看历史页面 ====================
+async function loadHistory() {
+    const box = document.getElementById('historyList');
+    if (!box) return;
+    if (!currentUser) {
+        box.innerHTML = emptyHTML('登录后才能查看观看历史');
+        return;
+    }
+    box.innerHTML = skeletonHTML(4);
+    try {
+        const list = await getJson('/api/video/select/history' + qs({ userId: currentUser.userId }));
+        if (!list || !list.length) {
+            box.innerHTML = emptyHTML('还没有观看记录');
+            return;
+        }
+        box.innerHTML = list.map(h => `
+            <div class="history-item" onclick="openHistoryVideo(${h.id})">
+                <div class="history-info">
+                    <div class="history-title">${escapeHtml(h.title || '')}</div>
+                    <div class="history-sub">看到 ${formatTime(h.progress)} · ${fmtTime(h.last_view_time)}</div>
+                </div>
+                <span class="history-go">继续观看 →</span>
+            </div>`).join('');
+    } catch (err) {
+        box.innerHTML = emptyHTML('还没有观看记录');
+    }
+}
+
+async function openHistoryVideo(videoId) {
+    try {
+        const list = await getJson('/api/video/byId' + qs({ id: videoId }));
+        if (!list || !list.length) return showToast('视频已不存在');
+        openDetail(list[0], 'history');
+    } catch (e) {
+        showToast(e.message);
+    }
+}
+
+function formatTime(sec) {
+    sec = Number(sec) || 0;
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + '分' + (s < 10 ? '0' + s : s) + '秒';
+}
+
+function fmtTime(t) {
+    return (t || '').toString().replace('T', ' ').slice(0, 16) || '-';
 }

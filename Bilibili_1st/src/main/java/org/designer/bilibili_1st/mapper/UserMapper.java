@@ -31,4 +31,9 @@ public interface UserMapper {
     //查看头像
     @Select("SELECT avatar FROM bilibili_user_log_in WHERE id=#{userId}")
     String selectAvatar(@Param("userId") long userId);
+
+    //修改用户名
+    @Update("UPDATE bilibili_user_log_in SET virtualName = #{virtualName} WHERE id = #{id}")
+    int editVirtualName(@Param("id") long id,
+                        @Param("virtualName") String virtualName);
 }

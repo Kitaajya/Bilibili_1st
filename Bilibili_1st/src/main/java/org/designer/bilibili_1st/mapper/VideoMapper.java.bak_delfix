@@ -151,11 +151,6 @@ public class VideoMapper {
         return jdbcTemplate.update("DELETE FROM video_comment WHERE video_id=?", videoId);
     }
 
-    //删除某视频的全部观看历史（配合删除视频，避免外键冲突）
-    public int deleteHistoryByVideo(long videoId) {
-        return jdbcTemplate.update("DELETE FROM video_history WHERE video_id=?", videoId);
-    }
-
     //视频获赞总数
     public long countLikes(long videoId) {
         Long n = jdbcTemplate.queryForObject(

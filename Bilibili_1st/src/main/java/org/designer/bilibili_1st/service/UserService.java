@@ -27,7 +27,7 @@ public class UserService {
         user.put("success", true);
         return user;
     }
-    @Value("${file.upload.path}")                  // ← 加这两行
+    @Value("${file.upload.path}")
     private String uploadPath;
     //收文件
     public Map<String, Object> updateAvatar(long userId, MultipartFile file) {
@@ -65,5 +65,12 @@ public class UserService {
         File f = new File(new File(uploadPath, "avatars"), safe);
         return f.exists() && f.isFile() ? f : null;
     }
-
+    //修改B站用户名
+    public Map<String,Object> editVirtualName(long id,String virtualName){
+        if(virtualName==null||virtualName.isBlank())
+            return Map.of("success",false,"message","用户名不能为空");
+        if(userMapper.editVirtualName(id, virtualName)==0)
+            return Map.of("success",false,"message","更名失败");
+        return Map.of("success",true,"message","更名成功");
+    }
 }

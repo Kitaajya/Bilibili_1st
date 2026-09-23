@@ -4,6 +4,7 @@ E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\Glob
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\Result.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\ResultMapper.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\DynamicController.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\FollowController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\LogInController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\PurchaseController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\UserController.java
@@ -14,6 +15,7 @@ E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\LogI
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\PurchaseEntity.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\VideoEntity.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\mapper\DynamicMapper.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\mapper\FollowMapper.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\mapper\LogInMapper.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\mapper\PurchaseMapper.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\mapper\UserMapper.java

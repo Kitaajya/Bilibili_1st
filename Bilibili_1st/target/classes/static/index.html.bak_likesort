@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哔哩哔哩 1st</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ======== 顶部 Header ======== -->
+<header class="header hidden" id="header">
+    <div class="logo" onclick="goHome()">
+        <div class="bili-icon">B</div>
+        <span>Bilibili 1st</span>
+    </div>
+    <div class="search">
+        <input id="searchInput" placeholder="搜索视频、UP主"
+               onkeydown="if (event.key === 'Enter') doSearch()">
+        <button onclick="doSearch()">搜索</button>
+    </div>
+    <div class="user-area" id="userArea"></div>
+    <button class="theme-btn" id="themeBtn" title="切换深色/浅色" onclick="toggleTheme()">&#127769;</button>
+</header>
+
+<!-- ======== 登录 / 注册 ======== -->
+<div id="loginPage" class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button id="tabLogin" class="auth-tab active" onclick="switchTab('login')">登录</button>
+            <button id="tabRegister" class="auth-tab" onclick="switchTab('register')">注册</button>
+        </div>
+
+        <form id="loginForm" onsubmit="return doLogin(event)">
+            <input type="text" name="qqEmail" placeholder="QQ邮箱" required>
+            <input type="password" name="password" placeholder="密码" required>
+            <button type="submit" class="btn-primary">登录</button>
+        </form>
+
+        <form id="registerForm" class="hidden" onsubmit="return doRegister(event)">
+            <input type="text" name="qqEmail" placeholder="QQ邮箱" required>
+            <input type="text" name="phoneNumber" placeholder="手机号（可选）">
+            <input type="password" name="password" placeholder="密码" required>
+            <input type="text" name="realName" placeholder="真实姓名" required>
+            <input type="text" name="virtualName" placeholder="昵称" required>
+            <button type="submit" class="btn-primary">注册</button>
+        </form>
+    </div>
+</div>
+
+<!-- ======== 主布局 ======== -->
+<div id="appMain" class="hidden">
+    <div class="layout">
+
+        <aside class="sidebar">
+            <ul>
+                <li class="nav-li active" data-page="video">▶ 视频</li>
+                <li class="nav-li" data-page="shop">🛒 商城</li>
+                <li class="nav-li" data-page="dynamic">💬 动态</li>
+                <li class="nav-li" data-page="order">📦 订单</li>
+                <li class="divider"></li>
+                <li class="nav-li" data-page="admin">⚙️ 管理</li>
+            </ul>
+        </aside>
+
+        <main class="content">
+
+            <!-- 视频 -->
+            <section id="page-video" class="page">
+                <div class="page-head">
+                    <h2 id="videoListTitle">全部视频</h2>
+                    <div class="toolbar">
+                        <button class="btn" onclick="loadMyVideos()">我的视频</button>
+                        <button class="btn-primary" onclick="showUploadVideo()">发布视频</button>
+                    </div>
+                </div>
+                <div id="userResultBox" class="hidden"></div>
+                <div id="videoGrid" class="grid"></div>
+            </section>
+
+            <!-- 商城 -->
+            <section id="page-shop" class="page hidden">
+                <div class="toolbar">
+                    <button class="btn-primary" onclick="loadProducts()">刷新商品</button>
+                    <form class="inline-form" onsubmit="return loadProductById(event)">
+                        <input type="number" id="searchId" placeholder="按ID查商品" required>
+                        <button class="btn" type="submit">查询</button>
+                    </form>
+                    <form class="inline-form" onsubmit="return loadProductsByPrice(event)">
+                        <input type="number" id="minPrice" placeholder="最低价" required>
+                        <input type="number" id="maxPrice" placeholder="最高价" required>
+                        <button class="btn" type="submit">按价格筛选</button>
+                    </form>
+                </div>
+                <table class="table" id="productTable">
+                    <thead>
+                    <tr><th>ID</th><th>商品名称</th><th>价格</th><th>数量</th><th>合计</th><th>操作</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- 动态 -->
+            <section id="page-dynamic" class="page hidden">
+                <div class="toolbar">
+                    <button class="btn-primary" onclick="loadAllDynamics()">刷新动态</button>
+                    <button class="btn" onclick="showWriteDynamic()">发布动态</button>
+                    <button class="btn" onclick="loadMyDynamics()">我的动态</button>
+                </div>
+                <div id="dynamicList" class="card-list"></div>
+            </section>
+
+            <!-- 订单 -->
+            <section id="page-order" class="page hidden">
+                <div class="toolbar">
+                    <button class="btn-primary" onclick="loadOrders()">刷新订单</button>
+                </div>
+                <table class="table" id="orderTable">
+                    <thead>
+                    <tr><th>ID</th><th>用户ID</th><th>商品名称</th><th>价格</th><th>数量</th><th>合计</th><th>我的评论</th><th>操作</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- 管理 -->
+            <section id="page-admin" class="page hidden">
+                <h3>添加商品</h3>
+                <form class="grid-form" onsubmit="return addProduct(event)">
+                    <input type="text" name="productName" placeholder="商品名称" required>
+                    <input type="number" step="0.01" name="price" placeholder="单价" required>
+                    <input type="number" name="quantity" placeholder="数量" required>
+                    <input type="number" step="0.01" name="total" placeholder="合计" required>
+                    <button class="btn-primary" type="submit">添加</button>
+                </form>
+
+                <h3>修改价格</h3>
+                <form class="grid-form" onsubmit="return editPrice(event)">
+                    <input type="number" name="id" placeholder="商品ID" required>
+                    <input type="text" name="name" placeholder="商品名称" required>
+                    <input type="number" step="0.01" name="newPrice" placeholder="新价格" required>
+                    <button class="btn-primary" type="submit">修改</button>
+                </form>
+
+                <h3>修改商品名称</h3>
+                <form class="grid-form" onsubmit="return editName(event)">
+                    <input type="number" name="id" placeholder="商品ID" required>
+                    <input type="text" name="newName" placeholder="新名称" required>
+                    <button class="btn-primary" type="submit">修改</button>
+                </form>
+
+                <h3>删除商品</h3>
+                <form class="grid-form" onsubmit="return deleteProduct(event)">
+                    <input type="number" name="id" placeholder="商品ID" required>
+                    <input type="text" name="name" placeholder="商品名称" required>
+                    <button class="btn-danger" type="submit">删除</button>
+                </form>
+
+                <h3>购物者信息</h3>
+                <button class="btn-primary" onclick="loadBuyers()">查看</button>
+                <table class="table hidden" id="buyerTable">
+                    <thead><tr><th>用户ID</th><th>商品名称</th><th>数量</th><th>合计</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- ======== 视频详情页 ======== -->
+<div id="videoDetail" class="detail hidden">
+    <button class="back-btn" onclick="backFromDetail()">← 返回</button>
+
+    <div class="player-wrap">
+        <video id="detailVideo" controls playsinline></video>
+    </div>
+
+    <h1 class="title" id="detailTitle"></h1>
+
+    <div class="meta">
+        <span id="detailUp"></span>
+        <span id="detailTime"></span>
+    </div>
+
+    <div class="action-bar">
+        <button id="btnLike" onclick="toggleAct('like')">👍 点赞</button>
+        <button id="btnCoin" onclick="toggleAct('coin')">🪙 投币</button>
+        <button id="btnFav" onclick="toggleAct('fav')">⭐ 收藏</button>
+        <button onclick="shareVideo()">↗ 分享</button>
+    </div>
+
+    <section class="comments">
+        <h3>评论 <span id="commentCount">0</span></h3>
+        <div class="comment-input">
+            <input id="commentInput" placeholder="发一条友善的评论"
+                   onkeydown="if (event.key === 'Enter') sendComment()">
+            <button class="btn-primary" onclick="sendComment()">发布</button>
+        </div>
+        <div id="commentList"></div>
+    </section>
+</div>
+
+<!-- ======== 用户主页 ======== -->
+<div id="userProfile" class="detail hidden">
+    <button class="back-btn" onclick="backFromProfile()">← 返回</button>
+    <div class="profile-head">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-info">
+            <div class="profile-name" id="profileName"></div>
+            <div class="profile-stats">
+                <span>投稿 <b id="profileVideoCount">0</b></span>
+                <span>播放 <b id="profileTotalView">0</b></span>
+                <span>获赞 <b id="profileTotalLike">0</b></span>
+            </div>
+        </div>
+    </div>
+    <h2 class="result-sub" style="margin-top:24px">TA 的作品</h2>
+    <div id="profileGrid" class="grid"></div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
+
+<!-- 完毕 -->

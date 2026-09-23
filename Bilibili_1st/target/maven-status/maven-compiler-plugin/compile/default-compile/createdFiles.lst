@@ -1,5 +1,6 @@
 org\designer\bilibili_1st\controller\PurchaseController.class
 org\designer\bilibili_1st\entity\LogInEntity.class
+org\designer\bilibili_1st\mapper\FollowMapper.class
 org\designer\bilibili_1st\common\GlobalExceptionHandler.class
 org\designer\bilibili_1st\common\ResultMapper.class
 org\designer\bilibili_1st\controller\DynamicController.class
@@ -9,6 +10,7 @@ org\designer\bilibili_1st\service\VideoService.class
 org\designer\bilibili_1st\controller\UserController.class
 org\designer\bilibili_1st\entity\LogInRequest.class
 org\designer\bilibili_1st\mapper\UserMapper.class
+org\designer\bilibili_1st\controller\FollowController.class
 org\designer\bilibili_1st\service\UserService.class
 org\designer\bilibili_1st\common\BusinessException.class
 org\designer\bilibili_1st\mapper\PurchaseMapper.class

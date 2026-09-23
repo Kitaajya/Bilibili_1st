@@ -267,7 +267,6 @@ function showPage(name) {
     document.getElementById('page-' + name).classList.remove('hidden');
     if (name === 'order') loadOrders();
     if (name === 'admin') loadBuyers();
-    if (name === 'history') loadHistory();
 }
 
 function goHome() {
@@ -514,14 +513,12 @@ function openDetail(v, from) {
     resetActs();
     loadLikeStatus();
     loadComments(v.id);
-    startHistoryReport(v.id);
     window.scrollTo({ top: 0 });
 }
 
 function backFromDetail() {
     document.getElementById('videoDetail').classList.add('hidden');
     document.getElementById('detailVideo').removeAttribute('src');
-    stopHistoryReport();
     if (detailReturn === 'profile' && currentProfileUserId != null) {
         openProfile(currentProfileUserId);
     } else {
@@ -1166,95 +1163,4 @@ async function toggleFollow() {
         showToast(json.data.following ? "已关注" : "已取关");
         loadFollowStatus(target);
     } catch (e) { showToast(e.message); }
-}
-
-// ==================== 观看历史上报 ====================
-let historyReportTimer = null;
-let historyLastReport = 0;
-
-function startHistoryReport(videoId) {
-    stopHistoryReport();
-    historyLastReport = 0;
-    const videoEl = document.getElementById('detailVideo');
-    if (!videoEl) return;
-    videoEl.ontimeupdate = () => {
-        const now = Date.now();
-        if (now - historyLastReport < 5000) return;
-        reportHistory(videoId, Math.floor(videoEl.currentTime));
-        historyLastReport = now;
-    };
-    historyReportTimer = setInterval(() => {
-        if (videoEl && !videoEl.paused && videoEl.currentTime > 0) {
-            reportHistory(videoId, Math.floor(videoEl.currentTime));
-        }
-    }, 15000);
-}
-
-function stopHistoryReport() {
-    const videoEl = document.getElementById('detailVideo');
-    if (videoEl) videoEl.ontimeupdate = null;
-    if (historyReportTimer) {
-        clearInterval(historyReportTimer);
-        historyReportTimer = null;
-    }
-    if (currentUser && currentVideoData && videoEl && videoEl.currentTime > 0) {
-        reportHistory(currentVideoData.id, Math.floor(videoEl.currentTime));
-    }
-}
-
-function reportHistory(videoId, progress) {
-    if (!currentUser || !videoId) return;
-    sendForm('/api/video/record/history', {
-        userId: currentUser.userId,
-        videoId: videoId,
-        progress: progress
-    }).catch(() => {});
-}
-
-// ==================== 观看历史页面 ====================
-async function loadHistory() {
-    const box = document.getElementById('historyList');
-    if (!box) return;
-    if (!currentUser) {
-        box.innerHTML = emptyHTML('登录后才能查看观看历史');
-        return;
-    }
-    box.innerHTML = skeletonHTML(4);
-    try {
-        const list = await getJson('/api/video/select/history' + qs({ userId: currentUser.userId }));
-        if (!list || !list.length) {
-            box.innerHTML = emptyHTML('还没有观看记录');
-            return;
-        }
-        box.innerHTML = list.map(h => `
-            <div class="history-item" onclick="openHistoryVideo(${h.id})">
-                <div class="history-info">
-                    <div class="history-title">${escapeHtml(h.title || '')}</div>
-                    <div class="history-sub">看到 ${formatTime(h.progress)} · ${fmtTime(h.last_view_time)}</div>
-                </div>
-                <span class="history-go">继续观看 →</span>
-            </div>`).join('');
-    } catch (err) {
-        box.innerHTML = emptyHTML('还没有观看记录');
-    }
-}
-
-async function openHistoryVideo(videoId) {
-    try {
-        const list = await getJson('/api/video/byId' + qs({ id: videoId }));
-        if (!list || !list.length) return showToast('视频已不存在');
-        openDetail(list[0], 'history');
-    } catch (e) {
-        showToast(e.message);
-    }
-}
-
-function formatTime(sec) {
-    sec = Number(sec) || 0;
-    const m = Math.floor(sec / 60), s = sec % 60;
-    return m + '分' + (s < 10 ? '0' + s : s) + '秒';
-}
-
-function fmtTime(t) {
-    return (t || '').toString().replace('T', ' ').slice(0, 16) || '-';
 }
