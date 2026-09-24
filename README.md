@@ -1,7 +1,7 @@
 # Bilibili_1st
 
 > 一个基于 Spring Boot 的 B 站仿站后端练习项目，实现了视频、动态、评论、点赞、商城等核心功能，并配有原生 HTML/CSS/JS 前端。
-> 注：此说明书是deepseek写的，有什么不对的地方可以直接向我询问。
+> 注：此说明书是deepseek写的，有什么不对的地方可以给我发送QQ邮箱。
 
 ![Java](https://img.shields.io/badge/Java-17+-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen)
