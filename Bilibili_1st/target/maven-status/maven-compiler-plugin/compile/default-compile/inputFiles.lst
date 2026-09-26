@@ -3,12 +3,14 @@ E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\Busi
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\GlobalExceptionHandler.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\Result.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\common\ResultMapper.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\config\Config.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\DynamicController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\FollowController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\LogInController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\PurchaseController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\UserController.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\controller\VideoController.java
+E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\double_link_list\DoubleLinkedList.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\DynamicEntity.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\LogInEntity.java
 E:\2026IDEAJava\Bilibili_1st\src\main\java\org\designer\bilibili_1st\entity\LogInRequest.java

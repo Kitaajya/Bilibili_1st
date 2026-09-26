@@ -2,6 +2,7 @@ package org.designer.bilibili_1st.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -16,6 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VideoMapper {
     private final JdbcTemplate jdbcTemplate;
+    private final UserMapper userMapper;
 
     //上传视频，返回数据库中的视频ID（-1表示失败）
     public long uploadVideo(long userId, String title, String videoPath) {
@@ -187,5 +189,17 @@ public class VideoMapper {
                     progress = VALUES(progress),
                     last_view_time = CURRENT_TIMESTAMP
                 """, userId, videoId, progress);
+    }
+    //清空指定的历史观看视频
+    public int clearHistory(long userId,long videoId){
+        return jdbcTemplate.update("""
+        DELETE FROM video_history WHERE user_id=? AND video_id=?
+        """,userId,videoId);
+    }
+    //清空所有历史浏览记录
+    public int clearAllHistory(long userId){
+        return jdbcTemplate.update("""
+        DELETE FROM video_history WHERE user_id=?
+        """,userId);
     }
 }

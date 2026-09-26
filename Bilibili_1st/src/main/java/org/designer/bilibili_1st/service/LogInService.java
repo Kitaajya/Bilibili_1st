@@ -29,11 +29,11 @@ public class LogInService {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             return Map.of("success", false, "message", "密码不能为空");
         }
-        if (logInMapper.existsByQqEmail(request.getQqEmail())) {
+        if (logInMapper.existsByQqEmailAndIsDeleted(request.getQqEmail(), 0)) {
             return Map.of("success", false, "message", "该邮箱已注册");
         }
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()
-                && logInMapper.existsByPhoneNumber(request.getPhoneNumber())) {
+                && logInMapper.existsByPhoneNumberAndIsDeleted(request.getPhoneNumber(), 0)) {
             return Map.of("success", false, "message", "该手机号已注册");
         }
 
@@ -58,7 +58,7 @@ public class LogInService {
             return Map.of("success", false, "message", "邮箱或密码不能为空");
         }
 
-        LogInEntity user = logInMapper.findByQqEmail(request.getQqEmail()).orElse(null);
+        LogInEntity user = logInMapper.findByQqEmailAndIsDeleted(request.getQqEmail(), 0).orElse(null);
         if (user == null) {
             return Map.of("success", false, "message", "用户不存在");
         }

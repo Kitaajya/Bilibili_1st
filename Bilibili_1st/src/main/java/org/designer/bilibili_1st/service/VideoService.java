@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.designer.bilibili_1st.mapper.VideoMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,7 +29,6 @@ public class VideoService {
             return Map.of("success", false, "message", "请选择要上传的视频文件");
         if (title == null || title.isBlank())
             return Map.of("success", false, "message", "视频标题不能为空");
-
         try {
             File dir = new File(uploadPath);
             if (!dir.exists() && !dir.mkdirs())
@@ -59,14 +59,15 @@ public class VideoService {
     }
 
     //查看某个人的视频
+    @Cacheable(value = "video")
     public List<Map<String, Object>> selectVideoByUserId(long userId) {
         return videoMapper.selectVideoByUserId(userId);
     }
 
-    //按id查询视频
-    public List<Map<String, Object>> selectVideoById(long id) {
-        return videoMapper.selectVideoById(id);
-    }
+    // //按id查询视频
+    // public List<Map<String, Object>> selectVideoById(long id) {
+    //     return videoMapper.selectVideoById(id);
+    // }
 
     //搜索视频
     public List<Map<String, Object>> searchVideo(String keyword) {
@@ -146,6 +147,7 @@ public class VideoService {
         return videoMapper.findUserByVirtualName(virtualName);
     }
     //按点赞量排序视频
+    @Cacheable(value="video")
     public List<Map<String,Object>> selectVideoByLikes(){
         return videoMapper.selectVideoByLikes();
     }
@@ -158,5 +160,22 @@ public class VideoService {
         int k=videoMapper.recordHistory(userId, videoId, progress);
         if(k==0) return Map.of("success",false,"message","记录失败");
         return Map.of("success",true,"message","记录成功");
+    }
+    //清空指定的历史观看视频
+    public Map<String,Object> clearHistory(long userId,long videoId){
+        int k=videoMapper.clearHistory(userId, videoId);
+        if(k==0) return Map.of("success",false,"message","删除失败");
+        return Map.of("success",true,"message","删除成功");
+    }
+    //清空所有历史浏览记录
+    public Map<String,Object> clearAllHistory(long userId){
+        int k=videoMapper.clearAllHistory(userId);
+        if(k==0) return Map.of("success",false,"message","删除失败");
+        return Map.of("success",true,"message","删除成功");
+    }
+    //直接从缓存里查，缓存最长为2，存活时间为10秒
+    @Cacheable(value="video",key="#id")
+    public List<Map<String, Object>> selectVideoById(long id){
+        return videoMapper.selectVideoById(id);
     }
 }

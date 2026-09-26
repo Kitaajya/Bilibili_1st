@@ -1,9 +1,6 @@
 package org.designer.bilibili_1st.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -36,4 +33,7 @@ public interface UserMapper {
     @Update("UPDATE bilibili_user_log_in SET virtualName = #{virtualName} WHERE id = #{id}")
     int editVirtualName(@Param("id") long id,
                         @Param("virtualName") String virtualName);
+    //注销自己的账号（软删除，置is_deleted=1，不真删）
+    @Update("UPDATE bilibili_user_log_in SET is_deleted = 1 WHERE id = #{userId}")
+    int deleteAccount(@Param("userId") long userId);
 }

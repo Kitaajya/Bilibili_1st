@@ -1,4 +1,4 @@
-﻿/* ========== 全局变量 ========== */
+/* ========== 全局变量 ========== */
 :root {
     --primary: #fb7299;
     --primary-hover: #ff85ad;
@@ -790,18 +790,3 @@ html[data-theme="dark"] .history-item:hover {
 @media (hover: none) {
     .history-del { opacity: 1; }
 }
-
-/* ========== 顶部轮播 banner ========== */
-.bili-banner{position:relative;width:100%;aspect-ratio:4/1;min-height:120px;border-radius:10px;overflow:hidden;margin-bottom:20px;user-select:none;}
-.bili-banner-track{display:flex;height:100%;transition:transform .45s ease;}
-.bili-banner-slide{flex:0 0 100%;height:100%;display:flex;align-items:center;padding:0 56px;color:#fff;}
-.bili-banner-text h3{margin:0 0 8px;font-size:22px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.2);}
-.bili-banner-text p{margin:0;font-size:14px;opacity:.92;}
-.bili-banner-arrow{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;border-radius:50%;background:rgba(0,0,0,.28);color:#fff;font-size:20px;line-height:1;cursor:pointer;opacity:0;transition:opacity .25s,background .2s;}
-.bili-banner:hover .bili-banner-arrow{opacity:1;}
-.bili-banner-arrow:hover{background:rgba(0,0,0,.5);}
-.bili-banner-arrow.prev{left:12px;}
-.bili-banner-arrow.next{right:12px;}
-.bili-banner-dots{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:8px;margin:0;padding:0;list-style:none;}
-.bili-banner-dots li{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;transition:all .25s;}
-.bili-banner-dots li.active{width:20px;border-radius:4px;background:#fff;}

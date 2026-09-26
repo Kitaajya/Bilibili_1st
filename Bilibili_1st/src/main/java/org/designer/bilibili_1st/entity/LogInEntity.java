@@ -44,4 +44,7 @@ public class LogInEntity {
     @Column(name="avatar")
     private String avatar;
 
+    @Column(name = "is_deleted")
+    private Integer isDeleted = 0;
+
 }

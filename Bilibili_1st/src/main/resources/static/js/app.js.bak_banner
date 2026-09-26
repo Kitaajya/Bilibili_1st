@@ -1,4 +1,4 @@
-﻿// ==================== 状态 ====================
+// ==================== 状态 ====================
 let currentUser = JSON.parse(localStorage.getItem('bilibili_user') || 'null');
 let currentVideoData = null;
 let videoSearchKeyword = '';
@@ -1041,7 +1041,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 无论是否登录，都进入主界面（未登录为游客模式，可浏览但不可互动）
     enterMain();
-    biliBannerAutoStart();
 });
 
 // 完毕
@@ -1340,40 +1339,4 @@ function toggleThemeFromSettings() {
     toggleTheme();
     closeModal();
     openSettings();
-}
-
-// ==================== 顶部轮播 banner ====================
-let biliBannerIndex = 0;
-let biliBannerTimer = null;
-
-function biliBannerRender() {
-    const track = document.getElementById('biliBannerTrack');
-    if (!track) return;
-    track.style.transform = 'translateX(-' + (biliBannerIndex * 100) + '%)';
-    document.querySelectorAll('#biliBannerDots li').forEach((dot, i) =>
-        dot.classList.toggle('active', i === biliBannerIndex));
-}
-
-function biliBannerTo(i) {
-    const total = document.querySelectorAll('#biliBannerTrack .bili-banner-slide').length;
-    if (!total) return;
-    biliBannerIndex = (i + total) % total;
-    biliBannerRender();
-}
-
-function biliBannerGo(step) {
-    biliBannerTo(biliBannerIndex + step);
-}
-
-function biliBannerAutoStart() {
-    if (!document.getElementById('biliBanner')) return;
-    biliBannerAutoStop();
-    biliBannerTimer = setInterval(() => biliBannerGo(1), 4000);
-}
-
-function biliBannerAutoStop() {
-    if (biliBannerTimer) {
-        clearInterval(biliBannerTimer);
-        biliBannerTimer = null;
-    }
 }

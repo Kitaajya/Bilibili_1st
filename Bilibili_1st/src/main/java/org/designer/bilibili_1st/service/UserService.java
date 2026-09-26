@@ -2,7 +2,6 @@ package org.designer.bilibili_1st.service;
 
 import lombok.RequiredArgsConstructor;
 //import lombok.Value;这个Value与下面的Value同名重复了
-import org.apache.ibatis.annotations.Param;
 import org.designer.bilibili_1st.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,5 +71,9 @@ public class UserService {
         if(userMapper.editVirtualName(id, virtualName)==0)
             return Map.of("success",false,"message","更名失败");
         return Map.of("success",true,"message","更名成功");
+    }
+    //注销自己的账号（软删除）
+    public int deleteAccount(long userId){
+        return userMapper.deleteAccount(userId);
     }
 }

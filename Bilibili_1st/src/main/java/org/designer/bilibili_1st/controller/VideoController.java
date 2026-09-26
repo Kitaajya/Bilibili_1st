@@ -174,5 +174,16 @@ public class VideoController {
                                                     @RequestParam int progress) {
         return Result.success(videoService.recordHistory(userId, videoId, progress));
     }
+    @DeleteMapping("/delete/single/history")
+    //清空指定的历史观看视频
+    public Result<Map<String,Object>> clearHistory(@RequestParam long userId,
+                                                   @RequestParam long videoId){
+        return Result.success(videoService.clearHistory(userId, videoId));
+    }
+    @DeleteMapping("/delete/all/history")
+    //清空所有观看历史
+    public Result<Map<String,Object>> clearAllHistory(long userId){
+        return Result.success(videoService.clearAllHistory(userId));
+    }
 }
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head><!-- 图标
             E:\2026IDEAJava\Bilibili_1st\src\main\resources\static\img.png
@@ -69,21 +69,7 @@
         <main class="content">
 
             <!-- 视频 -->
-            <section id="page-video" class="page">                <!-- 顶部轮播 banner -->
-                <div class="bili-banner" id="biliBanner" onmouseenter="biliBannerAutoStop()" onmouseleave="biliBannerAutoStart()">
-                    <div class="bili-banner-track" id="biliBannerTrack">
-                        <div class="bili-banner-slide" style="background:linear-gradient(120deg,#fb7299,#ff9db1)"><div class="bili-banner-text"><h3>欢迎来到 Bilibili_1st</h3><p>发布你的第一个视频，开启 UP 主之旅</p></div></div>
-                        <div class="bili-banner-slide" style="background:linear-gradient(120deg,#4a90d9,#7ec8ff)"><div class="bili-banner-text"><h3>按点赞排序，发现好内容</h3><p>点「按点赞排序」看看最受欢迎的视频</p></div></div>
-                        <div class="bili-banner-slide" style="background:linear-gradient(120deg,#f7b733,#fc4a1a)"><div class="bili-banner-text"><h3>观看历史已上线</h3><p>自动记录进度，随时「继续观看」</p></div></div>
-                    </div>
-                    <button class="bili-banner-arrow prev" onclick="biliBannerGo(-1)">‹</button>
-                    <button class="bili-banner-arrow next" onclick="biliBannerGo(1)">›</button>
-                    <ul class="bili-banner-dots" id="biliBannerDots">
-                        <li class="active" onclick="biliBannerTo(0)"></li>
-                        <li onclick="biliBannerTo(1)"></li>
-                        <li onclick="biliBannerTo(2)"></li>
-                    </ul>
-                </div>
+            <section id="page-video" class="page">
                 <div class="page-head">
                     <h2 id="videoListTitle">全部视频</h2>
                     <div class="toolbar">

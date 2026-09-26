@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS bilibili_user_log_in(
     virtualName  varchar(14) NOT NULL,
     qq_email     varchar(100) NOT NULL UNIQUE,
     phoneNumber  varchar(11) UNIQUE,     -- 可空，但不可重复
-    role         varchar(20) NOT NULL DEFAULT 'USER',  -- USER 普通用户 / MERCHANT 商家
+    role         varchar(20) NOT NULL DEFAULT 'USER',
+    is_deleted  TINYINT NOT NULL DEFAULT 0,  -- USER 普通用户 / MERCHANT 商家
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

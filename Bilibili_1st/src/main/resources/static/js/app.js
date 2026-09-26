@@ -1,4 +1,4 @@
-// ==================== 状态 ====================
+﻿// ==================== 状态 ====================
 let currentUser = JSON.parse(localStorage.getItem('bilibili_user') || 'null');
 let currentVideoData = null;
 let videoSearchKeyword = '';
@@ -230,10 +230,7 @@ function renderUserArea() {
     area.innerHTML = `
         ${avatarHtml(currentUser)}
         <span class="user-name">${escapeHtml(name)} ${badge}</span>
-        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
-        <button class="btn" onclick="document.getElementById('avatarInput').click()">换头像</button>
-        <button class="btn" onclick="editUserName()">改名</button>
-        <button class="logout-btn" onclick="logout()">退出登录</button>`;
+        <button class="btn" onclick="openSettings()">设置</button>`;
 }
 
 function logout() {
@@ -1044,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 无论是否登录，都进入主界面（未登录为游客模式，可浏览但不可互动）
     enterMain();
+    biliBannerAutoStart();
 });
 
 // 完毕
@@ -1232,6 +1230,7 @@ async function loadHistory() {
                     <div class="history-title">${escapeHtml(h.title || '')}</div>
                     <div class="history-sub">看到 ${formatTime(h.progress)} · ${fmtTime(h.last_view_time)}</div>
                 </div>
+                <button class="history-del" title="删除这条" onclick="deleteHistory(event, ${h.id})">×</button>
                 <span class="history-go">继续观看 →</span>
             </div>`).join('');
     } catch (err) {
@@ -1257,4 +1256,124 @@ function formatTime(sec) {
 
 function fmtTime(t) {
     return (t || '').toString().replace('T', ' ').slice(0, 16) || '-';
+}
+
+// ==================== 清空观看历史 ====================
+async function clearAllHistory() {
+    if (!requireLogin()) return;
+    if (!confirm("确定清空全部观看历史吗？此操作不可恢复")) return;
+    try {
+        await sendDelete("/api/video/delete/all/history", { userId: currentUser.userId });
+        showToast("已清空");
+        loadHistory();
+    } catch (e) { showToast(e.message); }
+}
+
+async function deleteHistory(e, videoId) {
+    e.stopPropagation();
+    if (!requireLogin()) return;
+    if(!confirm("确定删除此观看历史吗？操作不可逆！")) return;
+    try {
+        await sendDelete("/api/video/delete/single/history", { userId: currentUser.userId, videoId });
+        showToast("已删除");
+        loadHistory();
+    } catch (e) { showToast(e.message); }
+}
+
+// ==================== 注销账号 ====================
+function deleteAccount() {
+    if (!requireLogin()) return;
+    openModal(`
+        <h3 style="color:#f04134">注销账号</h3>
+        <p style="color:var(--text-sub);margin:10px 0">
+            注销后账号将无法登录，此操作不可撤销。<br>请输入「确认注销」以继续：
+        </p>
+        <input id="delConfirmInput" placeholder="确认注销" style="width:100%">
+        <button class="btn-danger" style="margin-top:10px" onclick="confirmDeleteAccount()">确认注销</button>
+    `);
+}
+
+async function confirmDeleteAccount() {
+    const input = document.getElementById("delConfirmInput");
+    if (!input || input.value.trim() !== "确认注销") {
+        showToast("请输入「确认注销」后再操作");
+        return;
+    }
+    try {
+        await sendDelete("/api/user/delete/account", { userId: currentUser.userId });
+        closeModal();
+        showToast("账号已注销");
+        logout();
+    } catch (e) { showToast(e.message); }
+}
+
+// ==================== 设置面板 ====================
+function openSettings() {
+    if (!currentUser) return;
+    const name = currentUser.virtualName || "用户";
+    const theme = document.documentElement.getAttribute("data-theme") || "light";
+    const isDark = theme === "dark";
+    openModal(`
+        <h3 style="margin-bottom:12px">设置</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn" style="text-align:left" onclick="settingsChangeAvatar()">换头像</button>
+            <button class="btn" style="text-align:left" onclick="settingsRename()">改名（当前：${escapeHtml(name)}）</button>
+            <button class="btn" style="text-align:left" onclick="toggleThemeFromSettings()">${isDark ? "切到浅色模式" : "切到深色模式"}</button>
+            <button class="logout-btn" style="text-align:left" onclick="logout()">退出登录</button>
+            <button class="btn-danger" style="text-align:left;margin-top:6px" onclick="deleteAccount()">注销账号</button>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
+    `);
+}
+
+function settingsChangeAvatar() {
+    const input = document.getElementById("avatarInput");
+    if (input) input.click();
+}
+
+function settingsRename() {
+    closeModal();
+    editUserName();
+}
+
+function toggleThemeFromSettings() {
+    toggleTheme();
+    closeModal();
+    openSettings();
+}
+
+// ==================== 顶部轮播 banner ====================
+let biliBannerIndex = 0;
+let biliBannerTimer = null;
+
+function biliBannerRender() {
+    const track = document.getElementById('biliBannerTrack');
+    if (!track) return;
+    track.style.transform = 'translateX(-' + (biliBannerIndex * 100) + '%)';
+    document.querySelectorAll('#biliBannerDots li').forEach((dot, i) =>
+        dot.classList.toggle('active', i === biliBannerIndex));
+}
+
+function biliBannerTo(i) {
+    const total = document.querySelectorAll('#biliBannerTrack .bili-banner-slide').length;
+    if (!total) return;
+    biliBannerIndex = (i + total) % total;
+    biliBannerRender();
+}
+
+function biliBannerGo(step) {
+    biliBannerTo(biliBannerIndex + step);
+}
+
+function biliBannerAutoStart() {
+    if (!document.getElementById('biliBanner')) return;
+    biliBannerAutoStop();
+    biliBannerTimer = setInterval(() => biliBannerGo(1), 4000);
+}
+
+function biliBannerAutoStop() {
+    if (biliBannerTimer) {
+        clearInterval(biliBannerTimer);
+        biliBannerTimer = null;
+    }
 }
